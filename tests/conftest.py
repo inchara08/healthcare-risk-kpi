@@ -60,7 +60,7 @@ def sample_inpatient(sample_beneficiaries) -> pd.DataFrame:
 
     admit_dates = pd.to_datetime(pd.date_range("2008-01-01", "2010-12-31", periods=n_claims))
     los = rng.integers(1, 20, size=n_claims)
-    discharge_dates = admit_dates + pd.to_timedelta(los, unit="d")
+    discharge_dates = admit_dates + pd.to_timedelta(los, unit="D")
 
     return pd.DataFrame(
         {

@@ -13,6 +13,21 @@ jobs:
       matrix:
         python-version: ["3.11"]
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: healthcare_risk
+          POSTGRES_USER: pguser
+          POSTGRES_PASSWORD: pgpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,9 +52,8 @@ jobs:
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-fail-under=25
+            --cov-fail-under=35
         env:
-          # Tests use synthetic fixtures — no real DB required
           PG_HOST: localhost
           PG_PORT: 5432
           PG_DB: healthcare_risk
