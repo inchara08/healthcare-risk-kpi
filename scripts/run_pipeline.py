@@ -16,7 +16,6 @@ Usage:
 from __future__ import annotations
 
 import logging
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -66,8 +65,8 @@ def validate(
     """Stage 2: Validate raw data with pandera schemas."""
     cfg = yaml.safe_load(config.read_text())
     from src.ingestion.loader import load_raw_data
-    from src.validation.schema import validate_beneficiaries, validate_inpatient
     from src.validation.report import write_validation_report
+    from src.validation.schema import validate_beneficiaries, validate_inpatient
 
     raw_dir = Path(cfg["data"]["raw_dir"])
     processed_dir = Path(cfg["data"]["processed_dir"])
@@ -110,6 +109,7 @@ def load(
     migrations_dir = Path("src/db/migrations")
 
     import pandas as pd
+
     from src.db.connection import get_engine, ping
     from src.db.loader import (
         load_beneficiaries,
@@ -160,9 +160,9 @@ def train(
     model_dir = Path(cfg["scoring"]["model_dir"])
     v = version or datetime.now().strftime("%Y%m%d_%H%M")
 
-    from src.models.readmission import run_readmission_training
-    from src.models.los_regression import train_los_model
     from src.models.high_cost import train_high_cost_model
+    from src.models.los_regression import train_los_model
+    from src.models.readmission import run_readmission_training
 
     train_path = processed_dir / "train_features.parquet"
     test_path = processed_dir / "test_features.parquet"
@@ -234,7 +234,6 @@ def all(
     for stage in [download, validate, load, features, train, score, kpis, report]:
         typer.echo(f"\n▶ Running: {stage.__name__}...")
         try:
-            ctx = typer.Context(stage)
             stage.callback(config=config) if hasattr(stage, "callback") else stage(config=config)
         except Exception as exc:
             typer.echo(f"✗ Stage '{stage.__name__}' failed: {exc}", err=True)

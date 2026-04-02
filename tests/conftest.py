@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import io
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
-
 
 SAMPLE_DIR = Path("data/samples")
 
@@ -134,7 +132,7 @@ def sample_patient_features(sample_inpatient, sample_beneficiaries) -> pd.DataFr
 @pytest.fixture(scope="session")
 def sample_conditions(sample_beneficiaries) -> pd.DataFrame:
     """Long-format chronic conditions for the sample beneficiaries."""
-    CONDITION_MAP = {
+    condition_map = {
         "SP_ALZHDMTA": "alzheimers", "SP_CHF": "chf", "SP_CHRNKIDN": "chronic_kidney",
         "SP_CNCR": "cancer", "SP_COPD": "copd", "SP_DEPRESSN": "depression",
         "SP_DIABETES": "diabetes", "SP_ISCHMCHT": "ischemic_heart",
@@ -143,7 +141,7 @@ def sample_conditions(sample_beneficiaries) -> pd.DataFrame:
     rng = np.random.default_rng(42)
     rows = []
     for bene_id in sample_beneficiaries["DESYNPUF_ID"].values:
-        for cond in CONDITION_MAP.values():
+        for cond in condition_map.values():
             if rng.random() > 0.7:
                 rows.append((bene_id, cond, rng.choice([1, 2])))
     return pd.DataFrame(rows, columns=["bene_id", "condition_code", "indicator"])

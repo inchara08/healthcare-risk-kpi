@@ -18,7 +18,7 @@ from sqlalchemy.engine import Engine
 
 from src.db.connection import get_engine
 from src.features.pipeline import FEATURE_COLS, TARGET_COL
-from src.models.readmission import SoftVoteEnsemble, get_top_shap_features
+from src.models.readmission import get_top_shap_features
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +187,6 @@ def score_claims(
 
 
 def _upsert_risk_scores(df: pd.DataFrame, engine: Engine) -> None:
-    cols = [c for c in df.columns if c != "readmission_label" or "readmission_label" in df.columns]
     chunk_size = 5000
     with engine.begin() as conn:
         for i in range(0, len(df), chunk_size):
