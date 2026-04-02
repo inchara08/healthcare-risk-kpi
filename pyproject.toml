@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "healthcare-risk-kpi"
+version = "0.1.0"
+description = "Predictive risk modeling and clinical KPI dashboard on CMS Medicare SynPUFs"
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+dependencies = [
+    "pandas>=2.2",
+    "pyarrow>=15.0",
+    "numpy>=1.26",
+    "pandera>=0.18",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary>=2.9",
+    "scikit-learn>=1.4",
+    "category-encoders>=2.6",
+    "xgboost>=2.0",
+    "lightgbm>=4.3",
+    "imbalanced-learn>=0.12",
+    "shap>=0.45",
+    "optuna>=3.6",
+    "jinja2>=3.1",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "python-dotenv>=1.0",
+    "requests>=2.31",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "black>=24.0",
+]
+
+[project.scripts]
+healthcare-pipeline = "scripts.run_pipeline:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "scripts*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Coverage flags are passed via Makefile/CI — omit here so bare pytest still works
+# addopts = "--cov=src --cov-report=term-missing --cov-fail-under=75"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]

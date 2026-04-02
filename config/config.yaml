@@ -1,0 +1,96 @@
+---
+# ─── Data ───────────────────────────────────────────────────────────────────
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  samples_dir: data/samples
+  # CMS SynPUF sample numbers to download (1–20 available; 1–5 gives ~1.1M claims)
+  synpuf_samples: [1, 2, 3, 4, 5]
+  synpuf_base_url: "https://www.cms.gov/files/zip"
+
+# ─── Validation ─────────────────────────────────────────────────────────────
+validation:
+  # Columns that must be 100% non-null; pipeline fails fast if violated
+  critical_non_null:
+    inpatient: ["DESYNPUF_ID", "CLM_ID", "CLM_ADMSN_DT"]
+    beneficiaries: ["DESYNPUF_ID", "BENE_BIRTH_DT"]
+  # Max allowed null rate (0.0–1.0) for other columns
+  null_thresholds:
+    CLM_DSCHRGDT: 0.05
+    CLM_PMT_AMT: 0.01
+    CLM_DRG_CD: 0.10
+  # Value range checks
+  ranges:
+    CLM_PMT_AMT: [0, 10_000_000]
+    age_at_admit: [0, 120]
+    los_days: [0, 730]
+
+# ─── Database ────────────────────────────────────────────────────────────────
+database:
+  # Connection details read from .env; these are fallback defaults only
+  host: localhost
+  port: 5432
+  name: healthcare_risk
+  # Bulk COPY batch size
+  copy_batch_size: 50_000
+
+# ─── Feature Engineering ─────────────────────────────────────────────────────
+features:
+  temporal_split_date: "2009-07-01"   # train < this date, test >= this date
+  readmission_window_days: 30
+  prior_admit_windows_days: [90, 365]
+  er_visit_window_days: 180
+  high_cost_percentile: 80            # top X% = high-cost label
+  age_bins: [0, 18, 35, 50, 65, 75, 85, 120]
+  age_labels: ["<18", "18-34", "35-49", "50-64", "65-74", "75-84", "85+"]
+
+# ─── Model Training ──────────────────────────────────────────────────────────
+model:
+  random_state: 42
+  n_cv_folds: 5
+  n_optuna_trials: 50
+  optuna_timeout_seconds: 3600       # 1 hour max per model
+  calibration_method: isotonic       # isotonic | sigmoid
+  ensemble_weights:
+    xgb: 0.5
+    lgbm: 0.5
+  # XGBoost search space bounds
+  xgb_space:
+    max_depth: [3, 8]
+    learning_rate: [0.01, 0.3]
+    n_estimators: [100, 1000]
+    subsample: [0.6, 1.0]
+    colsample_bytree: [0.6, 1.0]
+    reg_alpha: [0.0, 5.0]
+    reg_lambda: [0.0, 5.0]
+  # LightGBM search space bounds
+  lgbm_space:
+    num_leaves: [20, 150]
+    learning_rate: [0.01, 0.3]
+    n_estimators: [100, 1000]
+    subsample: [0.6, 1.0]
+    colsample_bytree: [0.6, 1.0]
+    reg_alpha: [0.0, 5.0]
+    reg_lambda: [0.0, 5.0]
+
+# ─── Scoring & Drift Detection ────────────────────────────────────────────────
+scoring:
+  model_dir: models
+  # Drift thresholds — triggers alert to analytics.pipeline_alerts
+  drift_mean_prob_threshold: 0.03    # absolute shift in mean predicted prob
+  drift_high_risk_pct_threshold: 5.0 # percentage-point shift in % high-risk
+  drift_null_rate_spike: 0.10        # null rate increase in top-5 SHAP features
+  risk_tiers:
+    high: 0.30     # prob >= 0.30 → high
+    medium: 0.15   # prob >= 0.15 → medium; else → low
+
+# ─── KPI Computation ─────────────────────────────────────────────────────────
+kpi:
+  national_avg_los_days: 4.6         # AHRQ 2023 national average
+  snapshot_lookback_days: 30         # rolling window for KPI aggregation
+
+# ─── Reporting ───────────────────────────────────────────────────────────────
+reporting:
+  reports_dir: reports
+  template_dir: src/reporting/templates
+  freshness_alert_hours: 48          # alert if KPI snapshots older than this
