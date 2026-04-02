@@ -205,15 +205,3 @@ To reconnect to a live PostgreSQL instance, see [`tableau/connection_template.md
 
 ---
 
-## Resume Bullets
-
-After running the pipeline and filling in your actual model numbers:
-
-**Data Scientist framing:**
-- Built calibrated XGBoost/LightGBM ensemble for 30-day hospital readmission on 650K+ synthetic Medicare claims, achieving AUROC **0.734** and AUPRC **0.573** — **8.5% lift** over logistic regression baseline — with SHAP-driven explainability identifying discharge status and Elixhauser comorbidity score as top risk drivers
-- Engineered 36 clinical and utilization features including Elixhauser comorbidity scoring, discharge risk encoding, and temporal 90/365-day prior-admission windows; applied isotonic calibration (Brier Score **0.191**) to align predicted probabilities with observed rates, enabling clinical team deployment without downstream recalibration
-- Designed 8-stage reproducible pipeline with automated pandera schema validation, model drift detection (mean prob shift >0.03 triggers alert), and weekly HTML reporting via GitHub Actions cron; PostgreSQL bulk COPY ingestion at 200K rows/sec across 1.1M+ records
-
----
-
-*Dataset: CMS Medicare SynPUFs — fully synthetic, no real patient data.*
