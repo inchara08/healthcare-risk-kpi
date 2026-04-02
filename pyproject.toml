@@ -64,6 +64,9 @@ select = ["E", "F", "I", "N", "W", "UP"]
 # N803/N806: uppercase X for feature matrices is standard ML convention (sklearn uses it)
 ignore = ["E501", "N803", "N806"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]
