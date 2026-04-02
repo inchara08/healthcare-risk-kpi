@@ -48,6 +48,7 @@ def download(
     """Stage 1: Generate synthetic SynPUF-schema data (replaces CMS download)."""
     cfg = yaml.safe_load(config.read_text())
     from src.ingestion.generate_synthetic import generate_and_save
+
     raw_dir = Path(cfg["data"]["raw_dir"])
     bene_path, inpatient_path = generate_and_save(
         raw_dir,
@@ -85,9 +86,7 @@ def validate(
         null_thresholds=val_cfg["null_thresholds"],
     )
 
-    json_path, html_path = write_validation_report(
-        [bene_results, inp_results], processed_dir
-    )
+    json_path, html_path = write_validation_report([bene_results, inp_results], processed_dir)
 
     if bene_results.get("violations") or inp_results.get("violations"):
         typer.echo(f"⚠ Validation warnings — review {html_path}", err=True)
@@ -143,6 +142,7 @@ def features(
     """Stage 4: Build feature parquet files."""
     cfg = yaml.safe_load(config.read_text())
     from src.features.pipeline import FeaturePipeline
+
     processed_dir = Path(cfg["data"]["processed_dir"])
     pipeline = FeaturePipeline(cfg)
     train_path, test_path = pipeline.run(processed_dir)
@@ -195,6 +195,7 @@ def score(
     model_dir = Path(cfg["scoring"]["model_dir"])
 
     from src.scoring.batch_scorer import score_claims
+
     score_claims(processed_dir / "test_features.parquet", model_dir, cfg)
     typer.echo("✓ Scoring complete")
 
@@ -206,6 +207,7 @@ def kpis(
     """Stage 7: Compute KPIs and write to analytics.kpi_snapshots."""
     cfg = yaml.safe_load(config.read_text())
     from src.reporting.kpi_builder import compute_and_store_kpis
+
     rows = compute_and_store_kpis(cfg)
     typer.echo(f"✓ KPIs computed: {rows} rows written")
 
@@ -217,6 +219,7 @@ def report(
     """Stage 8: Generate weekly HTML report."""
     cfg = yaml.safe_load(config.read_text())
     from src.reporting.html_report import generate_html_report
+
     reports_dir = Path(cfg["reporting"]["reports_dir"])
     model_dir = Path(cfg["scoring"]["model_dir"])
     path = generate_html_report(cfg, reports_dir, model_dir)

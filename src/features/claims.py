@@ -34,8 +34,8 @@ def add_financial_ratios(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     # Pass-through ratio: what fraction of payment is pass-through
     df["pass_thru_ratio"] = (
-        df["pass_thru_amt"] / df["claim_pmt_amt"].replace(0, np.nan)
-    ).fillna(0).astype("float32")
+        (df["pass_thru_amt"] / df["claim_pmt_amt"].replace(0, np.nan)).fillna(0).astype("float32")
+    )
 
     # Log-transformed payment (handles skew)
     df["log_claim_pmt"] = np.log1p(df["claim_pmt_amt"].fillna(0)).astype("float32")
@@ -69,9 +69,7 @@ def add_discharge_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
     # Binary: any non-routine discharge = higher readmission risk
-    df["is_not_routine_discharge"] = (
-        df["discharge_status_cd"].fillna(1) != 1
-    ).astype("Int8")
+    df["is_not_routine_discharge"] = (df["discharge_status_cd"].fillna(1) != 1).astype("Int8")
 
     # Ordinal risk score mapped from CMS discharge status codes
     # 1=home(low), 6=home+health(med-low), 2=transfer(med), 3=SNF(med-high),
@@ -100,12 +98,11 @@ def build_readmission_label(df: pd.DataFrame, window_days: int = 30) -> pd.Serie
     df = df.sort_values(["bene_id", "admit_dt"])
 
     # For each claim, check if there's a subsequent admission within window_days of discharge
-    df["next_admit_dt"] = (
-        df.groupby("bene_id")["admit_dt"].shift(-1)
-    )
+    df["next_admit_dt"] = df.groupby("bene_id")["admit_dt"].shift(-1)
     df["readmitted_30d"] = (
-        (df["next_admit_dt"] - df["discharge_dt"]).dt.days
-        .between(0, window_days, inclusive="right")
+        (df["next_admit_dt"] - df["discharge_dt"]).dt.days.between(
+            0, window_days, inclusive="right"
+        )
     ).astype("Int8")
 
     # Last admission per patient cannot have a readmission in dataset

@@ -117,5 +117,7 @@ def compute_and_store_kpis(cfg: dict, engine: Engine | None = None) -> int:
             _upsert_kpi(engine, today, prov, metric_name, float(metric_value))
             rows_written += 1
 
-    logger.info("KPI computation complete: %d rows written for %d providers", rows_written, len(providers))
+    logger.info(
+        "KPI computation complete: %d rows written for %d providers", rows_written, len(providers)
+    )
     return rows_written

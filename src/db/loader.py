@@ -37,8 +37,9 @@ CONDITION_MAP = {
 def _df_to_csv_buffer(df: pd.DataFrame) -> io.StringIO:
     # Convert nullable integer columns to object so NA writes as "" not "<NA>"
     df = df.copy()
-    for col in df.select_dtypes(include=["Int8", "Int16", "Int32", "Int64",
-                                          "UInt8", "UInt16", "UInt32", "UInt64"]).columns:
+    for col in df.select_dtypes(
+        include=["Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64"]
+    ).columns:
         df[col] = df[col].astype(object).where(df[col].notna(), other="")
     buf = io.StringIO()
     df.to_csv(buf, index=False, header=False, na_rep="")
@@ -55,6 +56,7 @@ def _copy_expert(cursor, table: str, columns: list[str], buf: io.StringIO) -> No
 def _fresh_conn():
     """Return a dedicated psycopg2 connection (not from the SQLAlchemy pool)."""
     import os
+
     return psycopg2.connect(
         host=os.environ.get("PG_HOST", "localhost"),
         port=int(os.environ.get("PG_PORT", 5432)),
@@ -67,6 +69,7 @@ def _fresh_conn():
 def run_migrations(engine: Engine, migrations_dir: Path) -> None:
     """Execute SQL migration files using a dedicated psycopg2 connection."""
     import os
+
     conn = psycopg2.connect(
         host=os.environ.get("PG_HOST", "localhost"),
         port=int(os.environ.get("PG_PORT", 5432)),
@@ -182,7 +185,9 @@ def load_chronic_conditions(bene_df: pd.DataFrame, engine: Engine) -> int:
     try:
         cur = conn.cursor()
         buf = _df_to_csv_buffer(long_df)
-        _copy_expert(cur, "claims.chronic_conditions", ["bene_id", "condition_code", "indicator"], buf)
+        _copy_expert(
+            cur, "claims.chronic_conditions", ["bene_id", "condition_code", "indicator"], buf
+        )
         conn.commit()
         count = len(rows)
     except Exception:
@@ -226,8 +231,14 @@ def load_inpatient_claims(df: pd.DataFrame, engine: Engine) -> int:
             subset[col] = subset[col].replace("NaT", "")
 
     # Cast smallint columns — avoid "0.0" written as float
-    int_cols = ["drg_cd", "admit_source_cd", "admit_type_cd", "discharge_status_cd",
-                "blood_pnts_qty", "utilization_day_cnt"]
+    int_cols = [
+        "drg_cd",
+        "admit_source_cd",
+        "admit_type_cd",
+        "discharge_status_cd",
+        "blood_pnts_qty",
+        "utilization_day_cnt",
+    ]
     for col in int_cols:
         if col in subset.columns:
             subset[col] = pd.to_numeric(subset[col], errors="coerce").astype("Int64")

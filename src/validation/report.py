@@ -92,9 +92,7 @@ def write_validation_report(
     output_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    overall_pass = all(
-        not r.get("violations") and not r.get("schema_errors") for r in results
-    )
+    overall_pass = all(not r.get("violations") and not r.get("schema_errors") for r in results)
 
     # ── JSON ──
     json_payload = {

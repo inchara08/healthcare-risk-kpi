@@ -14,6 +14,7 @@ from src.models.readmission import SoftVoteEnsemble
 
 # ─── Evaluator ───────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def binary_predictions():
     rng = np.random.default_rng(42)
@@ -25,7 +26,13 @@ def binary_predictions():
 def test_evaluate_returns_all_metrics(binary_predictions):
     y_true, y_prob = binary_predictions
     metrics = evaluate(y_true, y_prob, "test_model")
-    for key in ["auroc", "auprc", "brier_score", "sensitivity_at_80pct_specificity", "expected_calibration_error"]:
+    for key in [
+        "auroc",
+        "auprc",
+        "brier_score",
+        "sensitivity_at_80pct_specificity",
+        "expected_calibration_error",
+    ]:
         assert key in metrics, f"Missing metric: {key}"
 
 
@@ -68,8 +75,10 @@ def test_evaluate_positive_rate_field(binary_predictions):
 
 # ─── SoftVoteEnsemble ────────────────────────────────────────────────────────
 
+
 class _MockClassifier:
     """Minimal classifier that returns fixed probabilities."""
+
     def __init__(self, prob: float):
         self._prob = prob
 

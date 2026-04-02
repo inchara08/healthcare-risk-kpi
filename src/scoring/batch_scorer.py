@@ -105,9 +105,7 @@ def detect_drift(
 def _write_alert(engine: Engine, alert_type: str, message: str) -> None:
     with engine.begin() as conn:
         conn.execute(
-            text(
-                "INSERT INTO analytics.pipeline_alerts(alert_type, message) VALUES (:t, :m)"
-            ),
+            text("INSERT INTO analytics.pipeline_alerts(alert_type, message) VALUES (:t, :m)"),
             {"t": alert_type, "m": message},
         )
 
@@ -155,24 +153,27 @@ def score_claims(
             top_features_per_row.append([feat_cols[i] for i in top_idx])
     except Exception:
         logger.warning("SHAP per-row computation failed — using global top features")
-        global_top = get_top_shap_features(
-            np.zeros((1, len(feat_cols))), feat_cols
-        )
+        global_top = get_top_shap_features(np.zeros((1, len(feat_cols))), feat_cols)
         top_features_per_row = [global_top] * len(X)
 
     tiers = cfg["scoring"]["risk_tiers"]
-    scores_df = pd.DataFrame({
-        "claim_id": test["claim_id"].values,
-        "bene_id": test["bene_id"].values,
-        "model_version": version,
-        "readmission_prob": probs.astype(float),
-        "risk_tier": [_assign_risk_tier(p, tiers) for p in probs],
-        "shap_top_feature_1": [f[0] if len(f) > 0 else None for f in top_features_per_row],
-        "shap_top_feature_2": [f[1] if len(f) > 1 else None for f in top_features_per_row],
-        "shap_top_feature_3": [f[2] if len(f) > 2 else None for f in top_features_per_row],
-        "readmission_label": test[TARGET_COL].fillna(0).astype(int).values
-        if TARGET_COL in test.columns else None,
-    })
+    scores_df = pd.DataFrame(
+        {
+            "claim_id": test["claim_id"].values,
+            "bene_id": test["bene_id"].values,
+            "model_version": version,
+            "readmission_prob": probs.astype(float),
+            "risk_tier": [_assign_risk_tier(p, tiers) for p in probs],
+            "shap_top_feature_1": [f[0] if len(f) > 0 else None for f in top_features_per_row],
+            "shap_top_feature_2": [f[1] if len(f) > 1 else None for f in top_features_per_row],
+            "shap_top_feature_3": [f[2] if len(f) > 2 else None for f in top_features_per_row],
+            "readmission_label": (
+                test[TARGET_COL].fillna(0).astype(int).values
+                if TARGET_COL in test.columns
+                else None
+            ),
+        }
+    )
 
     # Write to analytics.risk_scores (upsert on claim_id)
     _upsert_risk_scores(scores_df, engine)
@@ -216,7 +217,11 @@ def _upsert_risk_scores(df: pd.DataFrame, engine: Engine) -> None:
                         "s1": row.shap_top_feature_1,
                         "s2": row.shap_top_feature_2,
                         "s3": row.shap_top_feature_3,
-                        "label": int(row.readmission_label) if row.readmission_label is not None else None,
+                        "label": (
+                            int(row.readmission_label)
+                            if row.readmission_label is not None
+                            else None
+                        ),
                     },
                 )
     logger.info("Upserted %d rows into analytics.risk_scores", len(df))

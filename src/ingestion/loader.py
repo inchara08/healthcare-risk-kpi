@@ -172,13 +172,13 @@ def load_raw_data(raw_dir: Path) -> SynPUFDataset:
     csv_paths = sorted(raw_dir.glob("*.csv"))
 
     if not zip_paths and not csv_paths:
-        raise FileNotFoundError(
-            f"No data files found in {raw_dir}. Run 'make download' first."
-        )
+        raise FileNotFoundError(f"No data files found in {raw_dir}. Run 'make download' first.")
 
     if csv_paths:
         # Synthetic generated CSVs
-        bene_files = [p for p in csv_paths if "beneficiary" in p.name.lower() or "bene" in p.name.lower()]
+        bene_files = [
+            p for p in csv_paths if "beneficiary" in p.name.lower() or "bene" in p.name.lower()
+        ]
         inpatient_files = [p for p in csv_paths if "inpatient" in p.name.lower()]
 
         bene_frames = []
@@ -203,7 +203,9 @@ def load_raw_data(raw_dir: Path) -> SynPUFDataset:
             raise FileNotFoundError(f"No inpatient CSV found in {raw_dir}")
 
         bene = pd.concat(bene_frames, ignore_index=True).drop_duplicates(subset=["DESYNPUF_ID"])
-        inpatient = pd.concat(inpatient_frames, ignore_index=True).drop_duplicates(subset=["CLM_ID"])
+        inpatient = pd.concat(inpatient_frames, ignore_index=True).drop_duplicates(
+            subset=["CLM_ID"]
+        )
         logger.info("Beneficiaries: %d unique records", len(bene))
         logger.info("Inpatient claims: %d unique records", len(inpatient))
         return SynPUFDataset(beneficiaries=bene, inpatient=inpatient)

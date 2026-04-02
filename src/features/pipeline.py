@@ -35,23 +35,47 @@ logger = logging.getLogger(__name__)
 # Columns selected as model features (subset of all engineered columns)
 FEATURE_COLS = [
     # Demographics
-    "age_at_admit", "age_group_ord", "is_female", "race_cd",
+    "age_at_admit",
+    "age_group_ord",
+    "is_female",
+    "race_cd",
     # Admission
-    "drg_cd_encoded", "admit_source_cd", "admit_type_cd", "discharge_status_cd",
-    "is_not_routine_discharge", "discharge_risk_score",
-    "admit_month", "admit_quarter", "admit_dow",
-    "admit_month_sin", "admit_month_cos", "admit_dow_sin", "admit_dow_cos",
+    "drg_cd_encoded",
+    "admit_source_cd",
+    "admit_type_cd",
+    "discharge_status_cd",
+    "is_not_routine_discharge",
+    "discharge_risk_score",
+    "admit_month",
+    "admit_quarter",
+    "admit_dow",
+    "admit_month_sin",
+    "admit_month_cos",
+    "admit_dow_sin",
+    "admit_dow_cos",
     # Clinical / comorbidities
     "elixhauser_count",
-    "cond_chf", "cond_diabetes", "cond_copd", "cond_chronic_kidney",
-    "cond_cancer", "cond_ischemic_heart", "cond_stroke_tia", "cond_depression",
+    "cond_chf",
+    "cond_diabetes",
+    "cond_copd",
+    "cond_chronic_kidney",
+    "cond_cancer",
+    "cond_ischemic_heart",
+    "cond_stroke_tia",
+    "cond_depression",
     "has_high_weight_comorbidity",
     # Utilization history
-    "prior_admits_90d_capped", "prior_admits_365d_capped",
-    "had_prior_admit_90d", "had_prior_admit_365d", "is_frequent_flyer",
-    "los_days_capped", "days_since_last_admit",
+    "prior_admits_90d_capped",
+    "prior_admits_365d_capped",
+    "had_prior_admit_90d",
+    "had_prior_admit_365d",
+    "is_frequent_flyer",
+    "los_days_capped",
+    "days_since_last_admit",
     # Financial
-    "log_claim_pmt", "pass_thru_ratio", "hmo_coverage_months",
+    "log_claim_pmt",
+    "pass_thru_ratio",
+    "hmo_coverage_months",
 ]
 
 TARGET_COL = "readmitted_30d"
@@ -84,9 +108,12 @@ class FeaturePipeline:
 
     def build_features(self, df: pd.DataFrame, conditions_df: pd.DataFrame) -> pd.DataFrame:
         """Apply all feature transforms in sequence."""
-        df = add_age_features(df, age_col="age_at_admit",
-                              bins=self.config["features"]["age_bins"],
-                              labels=self.config["features"]["age_labels"])
+        df = add_age_features(
+            df,
+            age_col="age_at_admit",
+            bins=self.config["features"]["age_bins"],
+            labels=self.config["features"]["age_labels"],
+        )
         df = add_sex_flag(df, col="sex_cd")
         df = add_admit_date_features(df, date_col="admit_dt")
         df = add_financial_ratios(df)
@@ -115,7 +142,9 @@ class FeaturePipeline:
 
         return df
 
-    def encode_drg(self, train: pd.DataFrame, test: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def encode_drg(
+        self, train: pd.DataFrame, test: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Target-encode DRG code — fitted on train only to prevent leakage."""
         self.drg_encoder = TargetEncoder(cols=["drg_cd"], smoothing=10)
         train = train.copy()
@@ -131,7 +160,9 @@ class FeaturePipeline:
         test = df[df["admit_dt"] >= self.split_date].copy()
         logger.info(
             "Temporal split: train=%d rows (before %s), test=%d rows",
-            len(train), self.split_date.date(), len(test)
+            len(train),
+            self.split_date.date(),
+            len(test),
         )
         pos_rate = train[TARGET_COL].mean()
         logger.info("Train readmission rate: %.1f%%", pos_rate * 100)

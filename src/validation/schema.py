@@ -73,6 +73,7 @@ INPATIENT_SCHEMA = DataFrameSchema(
 
 # ─── Null-rate checker ────────────────────────────────────────────────────────
 
+
 def check_null_rates(
     df: pd.DataFrame,
     thresholds: dict[str, float],
@@ -101,6 +102,7 @@ def check_null_rates(
 
 # ─── Critical non-null check ─────────────────────────────────────────────────
 
+
 def check_critical_non_null(
     df: pd.DataFrame,
     critical_cols: list[str],
@@ -118,6 +120,7 @@ def check_critical_non_null(
 
 
 # ─── Full validation runner ───────────────────────────────────────────────────
+
 
 def validate_beneficiaries(
     df: pd.DataFrame,

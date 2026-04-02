@@ -99,9 +99,12 @@ def _make_risk_tier_chart(provider_table: list[dict]) -> str:
     ax.bar(x, high, label="High", color="#e74c3c", alpha=0.85)
     ax.bar(x, medium, bottom=high, label="Medium", color="#f39c12", alpha=0.85)
     ax.bar(
-        x, low,
+        x,
+        low,
         bottom=[h + m for h, m in zip(high, medium)],
-        label="Low", color="#27ae60", alpha=0.85,
+        label="Low",
+        color="#27ae60",
+        alpha=0.85,
     )
     ax.set_xticks(list(x))
     ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)

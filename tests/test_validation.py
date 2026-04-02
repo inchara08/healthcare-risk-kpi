@@ -21,7 +21,9 @@ def test_check_critical_non_null_passes_clean_data(sample_beneficiaries):
 
 
 def test_check_critical_non_null_raises_on_nulls():
-    df = pd.DataFrame({"DESYNPUF_ID": ["A", None, "C"], "BENE_BIRTH_DT": pd.to_datetime(["2000-01-01"] * 3)})
+    df = pd.DataFrame(
+        {"DESYNPUF_ID": ["A", None, "C"], "BENE_BIRTH_DT": pd.to_datetime(["2000-01-01"] * 3)}
+    )
     with pytest.raises(ValueError, match="Critical column 'DESYNPUF_ID'"):
         check_critical_non_null(df, ["DESYNPUF_ID"], "test")
 

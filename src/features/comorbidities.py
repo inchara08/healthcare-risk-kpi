@@ -66,8 +66,6 @@ def add_comorbidity_flags(
     # High-weight comorbidity flag (any of the high-weight conditions present)
     high_weight_cols = [f"cond_{c}" for c in HIGH_WEIGHT_CONDITIONS if f"cond_{c}" in df.columns]
     if high_weight_cols:
-        df["has_high_weight_comorbidity"] = (
-            df[high_weight_cols].max(axis=1).astype("Int8")
-        )
+        df["has_high_weight_comorbidity"] = df[high_weight_cols].max(axis=1).astype("Int8")
 
     return df
