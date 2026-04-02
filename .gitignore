@@ -8,8 +8,8 @@ data/processed/
 !data/samples/
 
 # Models (large binaries — tracked via model_card JSON instead)
-models/
-!models/.gitkeep
+/models/
+!/models/.gitkeep
 
 # Reports output (generated, not source)
 reports/
