@@ -53,6 +53,18 @@ def _copy_expert(cursor, table: str, columns: list[str], buf: io.StringIO) -> No
     cursor.copy_expert(sql, buf)
 
 
+def _copy_dedup(conn, table: str, columns: list[str], buf: io.StringIO) -> None:
+    """COPY via a temp table then INSERT ... ON CONFLICT DO NOTHING (idempotent)."""
+    cols_str = ", ".join(f'"{c}"' for c in columns)
+    cur = conn.cursor()
+    cur.execute(f"CREATE TEMP TABLE _tmp_load (LIKE {table}) ON COMMIT DROP")
+    cur.copy_expert(f"COPY _tmp_load ({cols_str}) FROM STDIN WITH (FORMAT CSV, NULL '')", buf)
+    cur.execute(
+        f"INSERT INTO {table} ({cols_str}) SELECT {cols_str} FROM _tmp_load ON CONFLICT DO NOTHING"
+    )
+    cur.close()
+
+
 def _fresh_conn():
     """Return a dedicated psycopg2 connection (not from the SQLAlchemy pool)."""
     import os
@@ -125,41 +137,17 @@ def load_beneficiaries(df: pd.DataFrame, engine: Engine) -> int:
 
     conn = _fresh_conn()
     try:
-        cur = conn.cursor()
-        buf = _df_to_csv_buffer(subset)
-        _copy_expert(cur, "claims.beneficiaries", db_cols, buf)
+        _copy_dedup(conn, "claims.beneficiaries", db_cols, _df_to_csv_buffer(subset))
         conn.commit()
         count = len(subset)
-    except psycopg2.errors.UniqueViolation:
+    except Exception:
         conn.rollback()
-        logger.warning("Duplicate beneficiary records detected — using upsert fallback")
-        count = _upsert_beneficiaries(subset, engine)
+        raise
     finally:
         conn.close()
 
     logger.info("Beneficiaries loaded: %d rows", count)
     return count
-
-
-def _upsert_beneficiaries(df: pd.DataFrame, engine: Engine) -> int:
-    """Fallback: upsert in chunks when COPY hits duplicates."""
-    from sqlalchemy import text
-
-    inserted = 0
-    chunk_size = 5000
-    for i in range(0, len(df), chunk_size):
-        chunk = df.iloc[i : i + chunk_size]
-        with engine.begin() as conn:
-            for row in chunk.itertuples(index=False):
-                conn.execute(
-                    text(
-                        "INSERT INTO claims.beneficiaries (bene_id, birth_dt) "
-                        "VALUES (:bene_id, :birth_dt) ON CONFLICT (bene_id) DO NOTHING"
-                    ),
-                    {"bene_id": row.bene_id, "birth_dt": row.birth_dt},
-                )
-                inserted += 1
-    return inserted
 
 
 def load_chronic_conditions(bene_df: pd.DataFrame, engine: Engine) -> int:
@@ -183,10 +171,11 @@ def load_chronic_conditions(bene_df: pd.DataFrame, engine: Engine) -> int:
     long_df = pd.DataFrame(rows, columns=["bene_id", "condition_code", "indicator"])
     conn = _fresh_conn()
     try:
-        cur = conn.cursor()
-        buf = _df_to_csv_buffer(long_df)
-        _copy_expert(
-            cur, "claims.chronic_conditions", ["bene_id", "condition_code", "indicator"], buf
+        _copy_dedup(
+            conn,
+            "claims.chronic_conditions",
+            ["bene_id", "condition_code", "indicator"],
+            _df_to_csv_buffer(long_df),
         )
         conn.commit()
         count = len(rows)
@@ -245,9 +234,12 @@ def load_inpatient_claims(df: pd.DataFrame, engine: Engine) -> int:
 
     conn = _fresh_conn()
     try:
-        cur = conn.cursor()
-        buf = _df_to_csv_buffer(subset)
-        _copy_expert(cur, "claims.inpatient_claims", list(subset.columns), buf)
+        _copy_dedup(
+            conn,
+            "claims.inpatient_claims",
+            list(subset.columns),
+            _df_to_csv_buffer(subset),
+        )
         conn.commit()
         count = len(subset)
     except Exception:
@@ -291,9 +283,12 @@ def _load_icd9_codes(
     long_df = pd.DataFrame(rows, columns=["claim_id", "seq_num", code_col_name])
     conn = _fresh_conn()
     try:
-        cur = conn.cursor()
-        buf = _df_to_csv_buffer(long_df)
-        _copy_expert(cur, table, ["claim_id", "seq_num", code_col_name], buf)
+        _copy_dedup(
+            conn,
+            table,
+            ["claim_id", "seq_num", code_col_name],
+            _df_to_csv_buffer(long_df),
+        )
         conn.commit()
     except Exception:
         conn.rollback()
