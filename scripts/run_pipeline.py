@@ -234,12 +234,23 @@ def all(
     typer.echo("=" * 60)
     typer.echo("  Healthcare Risk KPI — Full Pipeline")
     typer.echo("=" * 60)
-    for stage in [download, validate, load, features, train, score, kpis, report]:
-        typer.echo(f"\n▶ Running: {stage.__name__}...")
+    v = datetime.now().strftime("%Y%m%d_%H%M")
+    stages: list[tuple] = [
+        (download, {"n_beneficiaries": 100_000, "n_claims": 500_000, "seed": 42}),
+        (validate, {}),
+        (load, {}),
+        (features, {}),
+        (train, {"version": v}),
+        (score, {}),
+        (kpis, {}),
+        (report, {}),
+    ]
+    for stage_fn, extra in stages:
+        typer.echo(f"\n▶ Running: {stage_fn.__name__}...")
         try:
-            stage.callback(config=config) if hasattr(stage, "callback") else stage(config=config)
+            stage_fn(config=config, **extra)
         except Exception as exc:
-            typer.echo(f"✗ Stage '{stage.__name__}' failed: {exc}", err=True)
+            typer.echo(f"✗ Stage '{stage_fn.__name__}' failed: {exc}", err=True)
             raise typer.Exit(1)
     typer.echo("\n✓ Pipeline complete!")
 
