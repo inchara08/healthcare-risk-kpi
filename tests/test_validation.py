@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pandas as pd
 import pytest
 
+from src.validation.report import write_validation_report
 from src.validation.schema import (
     check_critical_non_null,
     check_null_rates,
     validate_beneficiaries,
     validate_inpatient,
 )
-from src.validation.report import write_validation_report
 
 
 def test_check_critical_non_null_passes_clean_data(sample_beneficiaries):

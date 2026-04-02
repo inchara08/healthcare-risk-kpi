@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import pandas as pd
-import pytest
 
 from src.ingestion.loader import (
-    load_beneficiaries,
-    load_inpatient_claims,
-    _parse_dates,
     _coerce_int,
+    _parse_dates,
 )
 
 

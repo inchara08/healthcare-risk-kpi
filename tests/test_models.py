@@ -12,7 +12,6 @@ from src.models.evaluator import (
 )
 from src.models.readmission import SoftVoteEnsemble
 
-
 # ─── Evaluator ───────────────────────────────────────────────────────────────
 
 @pytest.fixture

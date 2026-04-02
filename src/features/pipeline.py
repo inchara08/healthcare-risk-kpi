@@ -17,7 +17,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from category_encoders import TargetEncoder
-from sklearn.model_selection import train_test_split
 from sqlalchemy.engine import Engine
 
 from src.db.connection import get_engine

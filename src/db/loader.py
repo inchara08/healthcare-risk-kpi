@@ -16,8 +16,6 @@ import pandas as pd
 import psycopg2
 from sqlalchemy.engine import Engine
 
-from src.db.connection import get_engine
-
 logger = logging.getLogger(__name__)
 
 # ─── SP_* condition code mapping ─────────────────────────────────────────────
