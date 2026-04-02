@@ -12,9 +12,8 @@ import logging
 import pickle
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import lightgbm as lgb
+import pandas as pd
 
 from src.features.pipeline import FEATURE_COLS, HIGH_COST_TARGET_COL
 from src.models.evaluator import evaluate

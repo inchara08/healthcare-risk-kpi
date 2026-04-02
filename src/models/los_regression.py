@@ -12,9 +12,9 @@ import logging
 import pickle
 from pathlib import Path
 
+import lightgbm as lgb
 import numpy as np
 import pandas as pd
-import lightgbm as lgb
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from src.features.pipeline import FEATURE_COLS, LOS_TARGET_COL
@@ -49,13 +49,14 @@ def train_los_model(
         verbose=-1,
     )
     model.fit(
-        X_train, y_train,
+        X_train,
+        y_train,
         eval_set=[(X_test, y_test)],
         callbacks=[lgb.early_stopping(50, verbose=False)],
     )
 
     preds_log = model.predict(X_test)
-    preds_days = np.expm1(preds_log)       # back-transform
+    preds_days = np.expm1(preds_log)  # back-transform
     actual_days = np.expm1(y_test)
 
     mae = mean_absolute_error(actual_days, preds_days)
@@ -72,7 +73,10 @@ def train_los_model(
     }
     logger.info(
         "LOS model: MAE=%.2f days | RMSE=%.2f | R²=%.4f | MAPE=%.1f%%",
-        mae, rmse, r2, mape,
+        mae,
+        rmse,
+        r2,
+        mape,
     )
 
     model_dir.mkdir(parents=True, exist_ok=True)

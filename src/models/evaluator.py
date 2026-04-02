@@ -12,6 +12,7 @@ import logging
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,9 +39,7 @@ def sensitivity_at_specificity(
     return float(tpr[idx])
 
 
-def expected_calibration_error(
-    y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10
-) -> float:
+def expected_calibration_error(y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10) -> float:
     """Compute Expected Calibration Error (ECE)."""
     bins = np.linspace(0, 1, n_bins + 1)
     ece = 0.0
@@ -80,7 +79,12 @@ def evaluate(
 
     logger.info(
         "[%s] AUROC=%.4f | AUPRC=%.4f | Brier=%.4f | Sens@80%%Spec=%.1f%% | ECE=%.4f",
-        model_name, auroc, auprc, brier, sens_80spec * 100, ece,
+        model_name,
+        auroc,
+        auprc,
+        brier,
+        sens_80spec * 100,
+        ece,
     )
     return metrics
 

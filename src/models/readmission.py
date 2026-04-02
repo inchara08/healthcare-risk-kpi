@@ -20,25 +20,24 @@ import logging
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
+import matplotlib
 import numpy as np
 import optuna
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")
+import lightgbm as lgb
 import matplotlib.pyplot as plt
 import shap
+import xgboost as xgb
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 from sklearn.preprocessing import StandardScaler
-import lightgbm as lgb
-import xgboost as xgb
 
-from src.models.evaluator import evaluate, plot_calibration, save_model_card
 from src.features.pipeline import FEATURE_COLS, TARGET_COL
+from src.models.evaluator import evaluate, plot_calibration, save_model_card
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -57,6 +56,7 @@ def _load_data(train_path: Path, test_path: Path) -> tuple[pd.DataFrame, ...]:
 
 # ─── Baseline: Logistic Regression ──────────────────────────────────────────
 
+
 def train_logistic_baseline(
     X_train: pd.DataFrame, y_train: np.ndarray, random_state: int = 42
 ) -> LogisticRegression:
@@ -69,6 +69,7 @@ def train_logistic_baseline(
 
 
 # ─── XGBoost with Optuna ─────────────────────────────────────────────────────
+
 
 def _xgb_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray, cfg: dict) -> float:
     sp = cfg["model"]["xgb_space"]
@@ -109,7 +110,6 @@ def train_xgboost(
     best = study.best_params
     logger.info("XGBoost best AUROC (CV): %.4f | params: %s", study.best_value, best)
 
-    sp = cfg["model"]["xgb_space"]
     model = xgb.XGBClassifier(
         **best,
         scale_pos_weight=(y_train == 0).sum() / max((y_train == 1).sum(), 1),
@@ -123,6 +123,7 @@ def train_xgboost(
 
 
 # ─── LightGBM with Optuna ────────────────────────────────────────────────────
+
 
 def _lgbm_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray, cfg: dict) -> float:
     sp = cfg["model"]["lgbm_space"]
@@ -175,6 +176,7 @@ def train_lightgbm(
 
 # ─── Ensemble + Calibration ──────────────────────────────────────────────────
 
+
 class SoftVoteEnsemble:
     """Soft-voting blend of XGBoost and LightGBM with configurable weights."""
 
@@ -206,6 +208,7 @@ class SoftVoteEnsemble:
 
 # ─── SHAP ────────────────────────────────────────────────────────────────────
 
+
 def compute_shap(
     model: xgb.XGBClassifier,
     X: pd.DataFrame,
@@ -223,8 +226,14 @@ def compute_shap(
     # Global summary plot
     output_dir.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(10, 8))
-    shap.summary_plot(shap_values, X_sample, feature_names=feature_names,
-                      plot_type="dot", show=False, max_display=15)
+    shap.summary_plot(
+        shap_values,
+        X_sample,
+        feature_names=feature_names,
+        plot_type="dot",
+        show=False,
+        max_display=15,
+    )
     plt.tight_layout()
     plt.savefig(output_dir / "shap_summary.png", dpi=150, bbox_inches="tight")
     plt.close()
@@ -242,6 +251,7 @@ def get_top_shap_features(
 
 
 # ─── Main training entry point ────────────────────────────────────────────────
+
 
 def run_readmission_training(
     train_path: Path,
@@ -263,8 +273,10 @@ def run_readmission_training(
 
     # Hold out 20% of training data as calibration set (stratified)
     X_train, X_cal, y_train, y_cal = train_test_split(
-        X_train_full, y_train_full,
-        test_size=0.2, stratify=y_train_full,
+        X_train_full,
+        y_train_full,
+        test_size=0.2,
+        stratify=y_train_full,
         random_state=cfg["model"]["random_state"],
     )
 
