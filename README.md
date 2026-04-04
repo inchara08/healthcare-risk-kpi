@@ -21,7 +21,7 @@ Ensemble is **+8.5% AUROC lift** over logistic baseline. Isotonic calibration re
 
 ## Dashboard
 
-*Add Tableau Public link after publishing*
+- Link
 
 <!-- [Live Dashboard →](https://public.tableau.com/...) -->
 
